@@ -9,6 +9,8 @@ description: >
 version: 0.1.0
 author: GrowthLab (growthlab.mx)
 license: MIT
+base_skills: [competitor-profiling, ads]
+subagent: "Paid Media Auditor"
 ---
 
 # gl-example-competitive-snapshot

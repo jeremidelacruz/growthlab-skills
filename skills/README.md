@@ -33,37 +33,37 @@ We do NOT re-host third-party skills verbatim. We link to the original source so
 
 ### Paid Media & Research
 
-| Skill | Author | What it does | Install |
+| Skill | Fuente / Source | What it does | Install |
 |---|---|---|---|
-| `competitor-profiling` | Anthropic / community | Structured competitor research with positioning analysis | Built-in Claude Code skill |
-| `competitors` | Anthropic / community | Rapid competitor overview from a URL or name | Built-in Claude Code skill |
-| `ad-creative` | Anthropic / community | Ad copy generation for paid social and search | Built-in Claude Code skill |
-| `ads` | Anthropic / community | Campaign briefing and ad strategy | Built-in Claude Code skill |
+| `competitor-profiling` | Claude Code community registry | Structured competitor research with positioning analysis | Built-in Claude Code skill |
+| `competitors` | Claude Code community registry | Rapid competitor overview from a URL or name | Built-in Claude Code skill |
+| `ad-creative` | Claude Code community registry | Ad copy generation for paid social and search | Built-in Claude Code skill |
+| `ads` | Claude Code community registry | Campaign briefing and ad strategy | Built-in Claude Code skill |
 
 ### SEO & Content
 
-| Skill | Author | What it does | Install |
+| Skill | Fuente / Source | What it does | Install |
 |---|---|---|---|
-| `seo-audit` | Anthropic / community | Technical + content SEO audit with prioritized fixes | Built-in Claude Code skill |
-| `ai-seo` | Anthropic / community | AI Engine Optimization (AEO/GEO) — visibility in AI citation engines | Built-in Claude Code skill |
-| `schema` | Anthropic / community | Structured data / JSON-LD schema implementation | Built-in Claude Code skill |
-| `content-strategy` | Anthropic / community | Editorial calendar and content pillar planning | Built-in Claude Code skill |
-| `copywriting` | Anthropic / community | Persuasive copy with AIDA / PAS / Cialdini frameworks | Built-in Claude Code skill |
+| `seo-audit` | Claude Code community registry | Technical + content SEO audit with prioritized fixes | Built-in Claude Code skill |
+| `ai-seo` | Claude Code community registry | AI Engine Optimization (AEO/GEO) — visibility in AI citation engines | Built-in Claude Code skill |
+| `schema` | Claude Code community registry | Structured data / JSON-LD schema implementation | Built-in Claude Code skill |
+| `content-strategy` | Claude Code community registry | Editorial calendar and content pillar planning | Built-in Claude Code skill |
+| `copywriting` | Claude Code community registry | Persuasive copy with AIDA / PAS / Cialdini frameworks | Built-in Claude Code skill |
 
 ### Analytics & CRO
 
-| Skill | Author | What it does | Install |
+| Skill | Fuente / Source | What it does | Install |
 |---|---|---|---|
-| `analytics` | Anthropic / community | GA4 / reporting analysis and insights | Built-in Claude Code skill |
-| `cro` | Anthropic / community | Conversion rate optimization audit and recommendations | Built-in Claude Code skill |
-| `benchmark` | Anthropic / community | Industry benchmark comparison for paid media KPIs | Built-in Claude Code skill |
+| `analytics` | Claude Code community registry | GA4 / reporting analysis and insights | Built-in Claude Code skill |
+| `cro` | Claude Code community registry | Conversion rate optimization audit and recommendations | Built-in Claude Code skill |
+| `benchmark` | Claude Code community registry | Industry benchmark comparison for paid media KPIs | Built-in Claude Code skill |
 
 ### Strategy & Planning
 
-| Skill | Author | What it does | Install |
+| Skill | Fuente / Source | What it does | Install |
 |---|---|---|---|
-| `marketing-plan` | Anthropic / community | Full marketing plan from brief to calendar | Built-in Claude Code skill |
-| `customer-research` | Anthropic / community | ICP / persona development from interviews or data | Built-in Claude Code skill |
+| `marketing-plan` | Claude Code community registry | Full marketing plan from brief to calendar | Built-in Claude Code skill |
+| `customer-research` | Claude Code community registry | ICP / persona development from interviews or data | Built-in Claude Code skill |
 
 ---
 
