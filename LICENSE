@@ -33,6 +33,7 @@ Any curated or forked third-party skill retains the original author's
 license. Users who install a third-party skill from its original source must
 keep that author's attribution and comply with their license terms.
 
-GrowthLab's MIT license above applies ONLY to GrowthLab-original content
-(files marked as such or located under skills/gl-*/), not to third-party
-skill content.
+GrowthLab's MIT license above applies to all GrowthLab-original content in
+this repository — including every skill authored by GrowthLab under skills/
+and any file marked as GrowthLab-original. It does NOT apply to third-party
+skill content, which retains its original author's license.
