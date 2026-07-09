@@ -5,10 +5,12 @@ description: >
   file that any LLM can read and respect. Triggers on: "create design.md",
   "brand manual to markdown", "make my brand guidelines AI-readable",
   "convert identity manual", "extract brand colors and fonts", "brand tokens from PDF",
-  "turn our style guide into rules for Claude". Extracts exact hex values, real embedded
+  "turn our style guide into rules for Claude", "capture a live site's design system",
+  "emit W3C design tokens", "make a design-tokens.json". Extracts exact hex values, real embedded
   font names (even from vectorized PDFs), logo rules, and voice — then emits a
-  self-verifiable rules file. Self-contained: no other skills required.
-version: 0.1.0
+  self-verifiable rules file, and optionally a machine-readable W3C design-tokens.json.
+  Self-contained: no other skills required.
+version: 0.2.0
 author: GrowthLab (growthlab.mx)
 license: MIT
 ---
@@ -45,7 +47,7 @@ The failure mode this prevents is not ugliness. It is *confident wrongness* — 
 Accept whatever the user has. In descending order of quality:
 
 1. **Brand manual PDF** — most common. Best source. Often vectorized (see Step 2).
-2. **Live website** — CSS custom properties and computed styles are authoritative for digital.
+2. **Live website** — CSS custom properties and computed styles are authoritative for digital. Capture it properly (headless, multi-viewport) — see "Live-site capture" below — not by screenshotting and eyedropping.
 3. **Loose images / screenshots** — lowest fidelity; colors are compressed and unreliable. Say so.
 4. **Verbal description only** — build a provisional `design.md`, mark every value `UNVERIFIED`, and ask for the manual.
 
@@ -69,6 +71,35 @@ Identify what you have and set expectations out loud:
 - Verbal → mark everything `UNVERIFIED`.
 
 Never proceed on a guess without labelling it as one.
+
+---
+
+### Live-site capture (when the source is a website)
+
+A live site is not a lower-fidelity PDF — for **digital** deliverables it is the *higher* authority, because it is the thing that actually renders. The computed styles the browser resolves are the ground truth: not what a manual says the blue should be, but what the blue **is** on screen right now. Capture that, don't approximate it.
+
+Do this with a real headless browser (Playwright), not by taking a screenshot and eyedropping it — a screenshot reintroduces exactly the quantization and anti-aliasing errors that Step 1 exists to avoid. The runnable script is in `references/extraction-cookbook.md` §9; here is what to capture and why.
+
+**Capture at three viewports.** A design system is responsive, so a single width tells you a fraction of it. Render the same page at:
+
+| Viewport | Width | Reveals |
+|---|---|---|
+| Mobile | 375 px | Base type sizes, stacked layout, tap targets, the mobile logo lockup |
+| Tablet | 768 px | The first breakpoint, intermediate spacing |
+| Desktop | 1440 px | Full navigation, max container width, display type scale |
+
+Type scales, spacing, and even which logo lockup is shown often change between these. Record values **per viewport** when they differ; note which one each value came from.
+
+**Four things to pull, in order of authority:**
+
+1. **CSS custom properties (`--var`) — the authoritative digital source.** A site with a real design system encodes it as custom properties (`--color-primary`, `--font-body`, `--space-4`). These are the design tokens, already named by the people who own the brand. Dump every `--*` from the resolved styles of `:root`/`document.documentElement`; that captures runtime theme overrides (dark mode, `data-theme`) as they actually compute. This is the single highest-value read on a live site — prefer it over everything below.
+2. **Real font-family stack from computed styles.** Read `getComputedStyle(el).fontFamily` on `body`, headings, and buttons — the *resolved* stack, not what a stylesheet declares. Then apply Step 2's licence + installation checks to the first family in the stack: the site listing `"Söhne", "Inter", sans-serif` tells you the same commercial-vs-open, installed-or-not story a PDF does.
+3. **The logo SVG — extract, never redraw** (Step 3's rule holds identically here). Grab inline `<svg>` `outerHTML` (largest first — the logo is usually among them) or the `src` of an `<img src="*.svg">`. Watch for `<use xlink:href="#id">`: the geometry lives in a sprite elsewhere in the DOM — grab that `<symbol>` too or you copy an empty shell.
+4. **Computed colors and spacing on real elements** — background/text/border colors and the spacing scale, sampled from rendered elements, for anything not already exposed as a `--var`.
+
+Feed all four back into Steps 1–3 exactly as a PDF would feed them: exact values, licence checks, confidence labels. A colour read from a `--var` is `VERIFIED`; a colour inferred from a screenshot is `APPROX`. Mark the difference.
+
+> **Cross-origin caveat.** `sheet.cssRules` throws on stylesheets served from another origin (a CDN). Those rules are silently skipped. When a site loads its CSS cross-origin, computed styles (which always resolve) still win — but note in the provenance that raw `--var` declarations may be incomplete.
 
 ---
 
@@ -304,6 +335,39 @@ A checkbox list the model verifies against its own output *before shipping anyth
 
 ---
 
+### Step 5b — Emit `design-tokens.json` (optional machine-readable companion)
+
+`design.md` is the primary deliverable — it is for a *reader* (human or LLM), and its prose rules ("accent ≤ 10% of surface", "never point the arrow down") do not fit any token schema. Keep it. But the palette, type scale, and spacing values inside it are also wanted by *tools* that cannot read prose: Style Dictionary, Figma Variables, Tokens Studio, and design-to-code generators. For those, emit a second file in the **W3C Design Token Community Group (DTCG)** format.
+
+Do this when the user asks for tokens, when the output feeds a codebase/design system, or whenever a live site already exposed `--var` tokens (Step "Live-site capture") — those map to DTCG one-to-one. Skip it for a one-off print job.
+
+**The DTCG shape.** Every leaf token is an object with `$value` and `$type`; groups nest freely. `$description` is optional but carries the *role* that makes a token checkable.
+
+```json
+{
+  "color": {
+    "ink": { "$value": "#0B2A4A", "$type": "color", "$description": "Primary. Body text, headings." },
+    "signal": { "$value": "#FF6B35", "$type": "color", "$description": "Accent only. Never a background." }
+  }
+}
+```
+
+`$type` values you will use: `color`, `dimension` (sizes/spacing, e.g. `"16px"`), `fontFamily` (a string or an array stack), `fontWeight` (`400`, `"bold"`), `number` (line-height), and the composite `typography` (`fontFamily` + `fontSize` + `fontWeight` + `lineHeight` in one `$value` object).
+
+**Layer the tokens — primitive → semantic → component.** This is the part that makes the file worth emitting instead of a flat colour list:
+
+- **Primitive** (raw values): `color.blue.500 = #1161EE`. Named by what it *is*.
+- **Semantic** (roles, referencing primitives): `color.text.brand = {color.blue.500}`. Named by what it's *for*. DTCG aliases use `{dot.path}` in braces as the `$value`.
+- **Component** (specific slots, referencing semantic): `button.background = {color.text.brand}`.
+
+A generator resolves the aliases; a human edits one primitive and every semantic/component token that points at it updates. Match the semantic layer to the **roles** in your `## Palette` table — they are the same information, once as prose and once as machine data.
+
+**The two files must not disagree.** The hexes, font names, and scale in `design-tokens.json` are the same values as in `design.md`. Verify it in Step 6. If they drift, `design.md` — the human-authored file with the reasoning — wins, and the JSON is regenerated from it.
+
+A ready-to-fill template with primitive/semantic/component layers: `references/design-tokens-template.json`.
+
+---
+
 ### Step 6 — Verify
 
 Do not hand over `design.md` until it passes this self-check. State the result of each item; do not just assert "verified."
@@ -319,6 +383,7 @@ Do not hand over `design.md` until it passes this self-check. State the result o
 | **Checklist is falsifiable** | Fewer than one item that could be mechanically checked against a deliverable |
 | **Provenance is recorded** | A value cannot be traced to a source (PDF page N, CSS variable, user statement) |
 | **Guesses are labelled** | Any `APPROX` / `UNVERIFIED` / `PROPOSED` value is unmarked |
+| **Tokens match the manual** | (If `design-tokens.json` was emitted) a hex, font, or size in the JSON differs from `design.md`, or a DTCG alias `{path}` points at a token that does not exist |
 
 The orphan-color check is worth automating — it catches the most common regression (someone edits Do/Don't and introduces a hex that was never in the palette). A script for it is in `references/extraction-cookbook.md`.
 
@@ -346,6 +411,8 @@ Two habits that keep it honest:
 ## References & credits
 
 **No third-party skill, framework, or copyrighted text is reproduced here.** The process and schema above are GrowthLab-original, MIT licensed.
+
+**Adapted ideas — with thanks.** The live-site multi-viewport capture and the W3C DTCG token-output format are adapted from the [`anydesign`](https://github.com/uxKero/anydesign) skill by @uxKero (Alan Ponce) — a complementary skill focused on live rendered systems (sites/Figma), where design-md focuses on vectorized PDF manuals. `anydesign` is MIT licensed (Copyright © 2026 Alan Ponce), which is compatible with this repo's MIT license. We reimplemented both ideas in design-md's own style and voice — the Playwright snippet, the DTCG shape, and the primitive→semantic→component layering here are our own code and prose, not copied from `anydesign`; the credit is for the ideas and the token format, both of which `anydesign` demonstrates well.
 
 External tools referenced by the cookbook (invoked by the user; not vendored into this repo):
 

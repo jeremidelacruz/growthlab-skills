@@ -19,7 +19,7 @@ We studied the ecosystem — hundreds of community skills and agents — and kep
 
 | Skill | What it does |
 |---|---|
-| [`design-md`](skills/design-md/SKILL.md) | Converts a brand identity manual (PDF, website, or images) into a `design.md` rules file that any LLM can read — and verify itself against. Extracts exact hex values and the real embedded font names even from fully-vectorized PDFs. Self-contained, no dependencies. |
+| [`design-md`](skills/design-md/SKILL.md) | Converts a brand identity source — PDF manuals + live sites (multi-viewport Playwright capture) + images — into a `design.md` rules file any LLM can read and verify itself against, plus an optional W3C DTCG `design-tokens.json`. Extracts exact hex values and the real embedded font names even from fully-vectorized PDFs. Self-contained, no dependencies. |
 
 More skills coming — this repo grows as we clean up and release more of our internal toolkit.
 

@@ -4,6 +4,8 @@ Two parts: a blank template to copy, then a filled neutral example.
 
 > GrowthLab-original content. MIT licensed (see repo `LICENSE`).
 
+> `design.md` is the **primary, human-readable** deliverable. For a machine-readable companion (Style Dictionary / Figma Variables / Tokens Studio), also emit `design-tokens.json` — see skill Step 5b and `design-tokens-template.json`. Keep the two in sync; if they disagree, this file wins.
+
 Rules for filling it in:
 
 - Mark unverified values `UNVERIFIED`, eyedropped values `APPROX`, and anything you invented `PROPOSED`.

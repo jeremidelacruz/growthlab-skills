@@ -441,3 +441,158 @@ for p in re.findall(r"`([^`]+\.(?:svg|png|ai|eps))`", md):
 ```
 
 Run it in CI if `design.md` lives in a repo. A rules file nobody validates decays into a rules file nobody follows.
+
+---
+
+## 9. Live-site capture with Playwright (multi-viewport)
+
+§4 gives you the raw browser-console reads. This is the headless runner that fires them at three viewports in one pass and returns structured JSON — the source for the skill's "Live-site capture" step. It captures the four things that matter: **CSS custom properties** (the authoritative digital source), the **resolved font-family stacks**, the **logo SVG** (extracted, never redrawn), and per-element computed colors.
+
+```bash
+pip install playwright
+playwright install chromium        # or skip and use channel="msedge" below to drive installed Edge
+```
+
+`channel="msedge"` drives the copy of Microsoft Edge already on the machine (handy on Windows where Edge ships with the OS — no extra browser download). Drop `channel=` to use Playwright's bundled Chromium instead.
+
+```python
+import json
+from playwright.sync_api import sync_playwright
+
+VIEWPORTS = {"mobile": (375, 812), "tablet": (768, 1024), "desktop": (1440, 900)}
+
+# One script, run in the page for each viewport. Returns everything in a single round-trip.
+EXTRACT_JS = r"""
+() => {
+  // --- CSS custom properties: authoritative digital source ---
+  // 1) Raw declarations from same-origin stylesheets (cross-origin .cssRules throws -> skipped)
+  const declared = {};
+  for (const sheet of document.styleSheets) {
+    let rules;
+    try { rules = sheet.cssRules; } catch { continue; }   // cross-origin CDN -> note it upstream
+    for (const rule of rules ?? []) {
+      if (!rule.style) continue;
+      for (const prop of rule.style) {
+        if (prop.startsWith('--')) declared[prop] = rule.style.getPropertyValue(prop).trim();
+      }
+    }
+  }
+  // 2) Resolved values on :root — catches runtime theme overrides (dark mode / data-theme)
+  const rootCS = getComputedStyle(document.documentElement);
+  const cssVars = {};
+  for (const name of Object.keys(declared)) {
+    cssVars[name] = { declared: declared[name], resolved: rootCS.getPropertyValue(name).trim() };
+  }
+
+  // --- Real font-family stacks from computed styles (resolved, not just declared) ---
+  const fontFor = sel => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const cs = getComputedStyle(el);
+    return { fontFamily: cs.fontFamily, fontSize: cs.fontSize, fontWeight: cs.fontWeight, lineHeight: cs.lineHeight };
+  };
+  const fonts = Object.fromEntries(
+    ['body','h1','h2','h3','p','a','button'].map(s => [s, fontFor(s)]).filter(([,v]) => v)
+  );
+  const loadedFonts = [...document.fonts].map(f => ({ family: f.family, weight: f.weight, style: f.style, status: f.status }));
+
+  // --- Computed colors on real elements (for anything not exposed as a --var) ---
+  const colorFor = sel => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const cs = getComputedStyle(el);
+    return { color: cs.color, background: cs.backgroundColor, border: cs.borderColor };
+  };
+  const colors = Object.fromEntries(
+    ['body','h1','a','button','[class*="btn"]','[class*="card"]'].map(s => [s, colorFor(s)]).filter(([,v]) => v)
+  );
+
+  // --- Logo SVG: extract, never redraw. Inline <svg> largest-first, plus linked .svg ---
+  const inlineSvgs = [...document.querySelectorAll('svg')]
+    .map(s => ({ w: Math.round(s.getBoundingClientRect().width), cls: s.getAttribute('class') || '', outerHTML: s.outerHTML }))
+    .filter(s => s.w > 0)
+    .sort((a, b) => b.w - a.w)
+    .slice(0, 5);
+  const linkedSvgs = [...document.querySelectorAll('img[src$=".svg"], img[srcset*=".svg"]')].map(i => i.currentSrc || i.src);
+  // Sprite geometry lives elsewhere when the logo is <use xlink:href="#id"> — capture symbols too.
+  const symbols = [...document.querySelectorAll('symbol[id], svg defs [id]')].map(s => ({ id: s.id, outerHTML: s.outerHTML })).slice(0, 20);
+
+  return { cssVars, fonts, loadedFonts, colors, logo: { inlineSvgs, linkedSvgs, symbols } };
+}
+"""
+
+def capture(url, out="site-capture.json"):
+    result = {"url": url, "viewports": {}}
+    with sync_playwright() as p:
+        browser = p.chromium.launch(channel="msedge", headless=True)  # drop channel= for bundled Chromium
+        try:
+            for name, (w, h) in VIEWPORTS.items():
+                page = browser.new_page(viewport={"width": w, "height": h}, device_scale_factor=2)
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                # Best-effort cookie-banner dismissal so it doesn't cover the logo in the screenshot
+                for label in ("Accept", "Aceptar", "Agree", "Got it", "I agree"):
+                    try:
+                        page.get_by_role("button", name=label, exact=False).first.click(timeout=800)
+                        break
+                    except Exception:
+                        pass
+                data = page.evaluate(EXTRACT_JS)
+                page.screenshot(path=f"site-{name}.png", full_page=True)
+                result["viewports"][name] = data
+                page.close()
+        finally:
+            browser.close()
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(result, fh, indent=2, ensure_ascii=False)
+    print(f"wrote {out} — viewports: {list(result['viewports'])}")
+    return result
+
+if __name__ == "__main__":
+    import sys
+    capture(sys.argv[1] if len(sys.argv) > 1 else "https://example.com")
+```
+
+What you get, and how to read it into the skill's steps:
+
+- **`cssVars`** — each `--var` with both its `declared` and `resolved` value. The resolved column is what actually renders; a mismatch means a runtime override (theme). This is the highest-authority digital source — feed it to Step 1 (colors) and Step 2 (fonts) as `VERIFIED`. It also maps one-to-one to `design-tokens.json` (§10).
+- **`fonts`** — resolved `fontFamily` stacks per element. Run the first family through §5 (open vs. commercial) and §6 (installed?) exactly as for a PDF.
+- **`logo.inlineSvgs`** — largest first; the logo is usually `[0]`. Save its `outerHTML`. If it uses `<use href="#id">`, find the matching `symbols[]` entry or the copied SVG is empty.
+- **`colors`** — computed colors on real elements, for values not exposed as a `--var`.
+
+Compare the three viewports before writing the type scale: mobile base sizes and the desktop display scale routinely differ, and the mobile logo lockup is often a different asset. Record per-viewport when they diverge.
+
+> **Note the caveats in provenance.** Cross-origin stylesheets are skipped by `.cssRules` (their `--var` declarations won't appear, though computed styles still resolve). Say so in the `design.md` header when it applies.
+
+---
+
+## 10. Assemble `design-tokens.json` (W3C DTCG) from captured values
+
+The captured `cssVars` (§9) or the palette/scale you extracted from a PDF go into a DTCG file: every leaf is `{ "$value": ..., "$type": ... }`, groups nest, and aliases reference other tokens with `{dot.path}`. Layer it primitive → semantic → component so a generator can resolve it and a human can edit one primitive. Full template: `design-tokens-template.json`.
+
+```python
+import json, re
+
+def tokens_from_cssvars(css_vars, out="design-tokens.json"):
+    """Rough starter: bucket resolved --vars into primitive tokens by $type. Hand-curate after."""
+    def typ(v):
+        if re.match(r"^#([0-9a-fA-F]{3,8})$|^(rgb|hsl)a?\(", v):          return "color"
+        if re.match(r"^-?\d*\.?\d+(px|rem|em|%)$", v):                     return "dimension"
+        if re.match(r"^[1-9]00$|^(bold|normal|light)$", v):               return "fontWeight"
+        if "," in v and re.search(r"[A-Za-z]", v):                        return "fontFamily"
+        return "string"
+    prim = {}
+    for name, pair in css_vars.items():
+        v = (pair["resolved"] or pair["declared"]).strip()
+        if not v:
+            continue
+        key = name.lstrip("-")                                            # --color-primary -> color-primary
+        prim[key] = {"$value": v, "$type": typ(v)}
+    doc = {"$description": "Primitive tokens auto-bucketed from live-site --vars. Add semantic + component layers by hand.",
+           "primitive": prim}
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, ensure_ascii=False)
+    print(f"wrote {out} — {len(prim)} primitive tokens (curate roles + aliases next)")
+    return doc
+```
+
+This only bootstraps the **primitive** layer. The value of the file is the semantic layer — `color.text.brand = {primitive.color-primary}`, named by role, matched to your `## Palette` roles — which is a human decision, not a regex. Add it by hand from the template. Then verify the JSON hexes/fonts/sizes match `design.md` (skill Step 6); if they drift, `design.md` wins.

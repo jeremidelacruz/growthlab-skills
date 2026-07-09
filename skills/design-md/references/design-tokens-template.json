@@ -1,0 +1,92 @@
+{
+  "$description": "design-tokens.json — W3C DTCG format (https://tr.designtokens.org). Machine-readable companion to design.md; design.md stays the primary human deliverable. Every leaf token is { \"$value\", \"$type\" }; groups nest; aliases reference another token with a {dot.path} in braces. Layered primitive -> semantic -> component: edit a primitive once and every alias that points at it updates. Consumable by Style Dictionary, Figma Variables, and Tokens Studio. GrowthLab-original; DTCG shape adapted from the anydesign skill by @uxKero (MIT). Delete example rows and replace every value with your own. Values below mirror the worked example in design-md-template.md.",
+
+  "primitive": {
+    "$description": "Raw values, named by what they ARE. Never referenced directly by UI code — the semantic layer points here.",
+    "color": {
+      "blue": {
+        "500": { "$value": "#1161EE", "$type": "color" }
+      },
+      "ink":   { "$value": "#111111", "$type": "color" },
+      "white": { "$value": "#FFFFFF", "$type": "color" },
+      "cloud": { "$value": "#F4F4F4", "$type": "color" },
+      "slate": { "$value": "#6B6B6B", "$type": "color" },
+      "red":    { "$value": "#F84E37", "$type": "color" },
+      "yellow": { "$value": "#CBF834", "$type": "color" },
+      "yellow-contrast": { "$value": "#9BC400", "$type": "color", "$description": "Computed darker yellow-green for legibility on white. Derived, not eyeballed." },
+      "purple": { "$value": "#AF24F6", "$type": "color" }
+    },
+    "fontFamily": {
+      "primary":   { "$value": ["Agenda", "Hanken Grotesk", "system-ui", "sans-serif"], "$type": "fontFamily", "$description": "Real face Agenda is commercial + not installed; renders in Hanken Grotesk (OFL)." },
+      "secondary": { "$value": ["Gotham", "Montserrat", "system-ui", "sans-serif"], "$type": "fontFamily", "$description": "Real face Gotham is commercial + not installed; renders in Montserrat (OFL)." }
+    },
+    "fontWeight": {
+      "regular":  { "$value": 400, "$type": "fontWeight" },
+      "semibold": { "$value": 600, "$type": "fontWeight" },
+      "bold":     { "$value": 700, "$type": "fontWeight" }
+    },
+    "fontSize": {
+      "caption": { "$value": "12px", "$type": "dimension" },
+      "body":    { "$value": "16px", "$type": "dimension" },
+      "h3":      { "$value": "18px", "$type": "dimension" },
+      "h2":      { "$value": "24px", "$type": "dimension" },
+      "h1":      { "$value": "32px", "$type": "dimension" },
+      "display": { "$value": "48px", "$type": "dimension" }
+    },
+    "lineHeight": {
+      "tight":   { "$value": 1.2, "$type": "number" },
+      "default": { "$value": 1.5, "$type": "number" }
+    },
+    "space": {
+      "1": { "$value": "4px",  "$type": "dimension" },
+      "2": { "$value": "8px",  "$type": "dimension" },
+      "3": { "$value": "16px", "$type": "dimension" },
+      "4": { "$value": "24px", "$type": "dimension" },
+      "5": { "$value": "40px", "$type": "dimension" }
+    }
+  },
+
+  "semantic": {
+    "$description": "Roles, named by what they are FOR. Reference primitives via {alias}. Match these to the Role column of the design.md ## Palette table — same information, once as prose, once as data.",
+    "color": {
+      "text": {
+        "default": { "$value": "{primitive.color.ink}",     "$type": "color", "$description": "Body text." },
+        "brand":   { "$value": "{primitive.color.blue.500}", "$type": "color", "$description": "Primary. Must appear on every deliverable." },
+        "muted":   { "$value": "{primitive.color.slate}",    "$type": "color" }
+      },
+      "surface": {
+        "default": { "$value": "{primitive.color.white}", "$type": "color" },
+        "card":    { "$value": "{primitive.color.cloud}", "$type": "color" }
+      },
+      "accent": {
+        "alert":  { "$value": "{primitive.color.red}",    "$type": "color", "$description": "Accent only. Never a full-page background." },
+        "win":    { "$value": "{primitive.color.yellow}", "$type": "color", "$description": "Accent only." },
+        "premium":{ "$value": "{primitive.color.purple}", "$type": "color", "$description": "Accent only." }
+      }
+    },
+    "typography": {
+      "display": { "$type": "typography", "$value": { "fontFamily": "{primitive.fontFamily.primary}",   "fontSize": "{primitive.fontSize.display}", "fontWeight": "{primitive.fontWeight.bold}",     "lineHeight": "{primitive.lineHeight.tight}" } },
+      "h1":      { "$type": "typography", "$value": { "fontFamily": "{primitive.fontFamily.primary}",   "fontSize": "{primitive.fontSize.h1}",      "fontWeight": "{primitive.fontWeight.bold}",     "lineHeight": "{primitive.lineHeight.tight}" } },
+      "h2":      { "$type": "typography", "$value": { "fontFamily": "{primitive.fontFamily.primary}",   "fontSize": "{primitive.fontSize.h2}",      "fontWeight": "{primitive.fontWeight.semibold}", "lineHeight": "{primitive.lineHeight.tight}" } },
+      "body":    { "$type": "typography", "$value": { "fontFamily": "{primitive.fontFamily.secondary}", "fontSize": "{primitive.fontSize.body}",    "fontWeight": "{primitive.fontWeight.regular}",  "lineHeight": "{primitive.lineHeight.default}" } },
+      "caption": { "$type": "typography", "$value": { "fontFamily": "{primitive.fontFamily.secondary}", "fontSize": "{primitive.fontSize.caption}", "fontWeight": "{primitive.fontWeight.regular}",  "lineHeight": "{primitive.lineHeight.default}" } }
+    }
+  },
+
+  "component": {
+    "$description": "Specific UI slots, named by where they are USED. Reference semantic tokens. This layer is optional — add only the components you actually theme.",
+    "button": {
+      "primary": {
+        "background": { "$value": "{semantic.color.text.brand}",   "$type": "color" },
+        "label":      { "$value": "{primitive.color.white}",        "$type": "color", "$description": "White-on-brand is the primary CTA combination." },
+        "paddingX":   { "$value": "{primitive.space.4}",            "$type": "dimension" },
+        "paddingY":   { "$value": "{primitive.space.2}",            "$type": "dimension" }
+      }
+    },
+    "card": {
+      "background": { "$value": "{semantic.color.surface.card}", "$type": "color" },
+      "text":       { "$value": "{semantic.color.text.default}", "$type": "color" },
+      "gap":        { "$value": "{primitive.space.3}",           "$type": "dimension" }
+    }
+  }
+}
