@@ -19,7 +19,10 @@ We studied the ecosystem — hundreds of community skills and agents — and kep
 
 | Skill | What it does |
 |---|---|
+| [`product-marketing-md`](skills/product-marketing-md/SKILL.md) | Turns scattered knowledge about your product and your customer into a `product-marketing.md` context file any LLM reads before it writes ads, copy, emails, or posts. Interviews you (or auto-drafts from your site/repo), captures verbatim customer language, and enforces one rule: no invented numbers. Self-contained, no dependencies. Pairs with `design-md`. |
 | [`design-md`](skills/design-md/SKILL.md) | Converts a brand identity source — PDF manuals + live sites (multi-viewport Playwright capture) + images — into a `design.md` rules file any LLM can read and verify itself against, plus an optional W3C DTCG `design-tokens.json`. Extracts exact hex values and the real embedded font names even from fully-vectorized PDFs. Self-contained, no dependencies. |
+
+The two pair up: `product-marketing.md` is the **business** half of your AI context (what you sell, to whom, why they buy); `design.md` is the **visual** half (how you look and sound). Give your agent both.
 
 More skills coming — this repo grows as we clean up and release more of our internal toolkit.
 

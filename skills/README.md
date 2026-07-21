@@ -8,6 +8,7 @@ GrowthLab-original skills — each one self-contained, MIT-licensed, and safe to
 
 | Skill | Description | File |
 |---|---|---|
+| `product-marketing-md` | Turn scattered knowledge about your product and your customer into a `product-marketing.md` context file any LLM reads before it writes ads, copy, emails, or posts. Interviews you (or auto-drafts from your site/repo), captures verbatim customer language, and enforces one rule: no invented numbers. Pairs with `design-md`. | [product-marketing-md/SKILL.md](product-marketing-md/SKILL.md) |
 | `design-md` | Convert a brand identity source — PDF manuals + live sites + W3C tokens — into a `design.md` rules file any LLM can read and verify itself against, plus an optional DTCG `design-tokens.json`. Extracts exact hex values and real embedded font names even from vectorized PDFs. | [design-md/SKILL.md](design-md/SKILL.md) |
 
 ---
