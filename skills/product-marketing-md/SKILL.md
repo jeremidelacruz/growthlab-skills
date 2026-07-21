@@ -255,4 +255,10 @@ product-context file is common practice across marketing teams; this is our own 
 leaner than our internal version, with the "never invent a number" rule that our own delivery
 runs on.
 
+**On lineage.** The section taxonomy also draws on a product-context skill we adopted and use
+internally, whose original authorship we were unable to identify — it carried no author or
+license. Everything here is reimplemented in our own words, not copied. If you are that author
+and recognize your ideas, please open an issue or email hola@growthlab.mx and we'll credit you
+by name.
+
 Pairs with the [`design-md`](../design-md/SKILL.md) skill in this repo. Use both.
